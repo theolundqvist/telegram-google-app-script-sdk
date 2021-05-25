@@ -8,7 +8,9 @@ Some helper methods to use with Google Apps Script to simplify integration with 
 - Remove/edit message content.
 and more
 
+Getting started instructions are in the script.
+
 Built this while developing
 https://t.me/aktienyheter_bot
 and
-https://t.me/ord_bot
+https://t.me/ord_bot [<a href="https://github.com/theolundqvist/bot_ord">github</a>]
