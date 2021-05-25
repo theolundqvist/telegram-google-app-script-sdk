@@ -1,4 +1,4 @@
-# Telegram-Google-Apps-Script-Helper-Methods
+# TelegramAPI-GoogleAppsScript
 Some helper methods to use with Google Apps Script to simplify integration with Telegram bot API.
 - Send messages
 - Send photos
