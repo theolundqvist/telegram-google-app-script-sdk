@@ -1,10 +1,43 @@
-
+botUrl = "YOUR_TELEGRAM_API_URL"
+adminId = "YOUR_TELEGRAM_CHAT_ID" //Use to send messages to yourself, find by setting WebHook and printing id in doPost()
 
 //ALWAYS return htmlOK() from doPost
 function htmlOK(){
   return HtmlService.createHtmlOutput('header("HTTP/1.1 200 OK");'); 
 }
 
+//FIRST THING TO DO
+function setWebHook(){
+  var url = "YOUR_SCRIPT_URL";
+  var res = UrlFetchApp.fetch(botUrl+"/setWebhook?url="+url+"&allowed_updates=message").getContentText();
+  print(res)
+}
+
+function webhookinfo(){
+  var res = UrlFetchApp.fetch(botUrl+"/getWebhookInfo").getContentText();
+  print(res)
+}
+
+
+
+//Your doPost should look something like this.
+
+function doPost(e){
+  let data = parseUpdate(e)  
+   /* @returns one of the following
+   * {type: "message", m: {}, id: "", message_text: ""}
+   * {type: "callback", m: {}, id: "", button_text: "", message_text: "", name: "", message_id: ""}
+   * {type: "inline_query", id: "", query: "", name: "", query_id: ""}*/
+  
+  print(data.id) //this is your userId/chatId. Send message to bot and save this as adminId to send messages to yourself.
+  
+  if(data.type == "message"){
+    let text = data.message_text.toLowerCase()
+    if(text == "hi") sendMessage(data.id, "hi")
+  }
+
+  return htmlOK()
+}
 
 
 /**
@@ -33,7 +66,7 @@ function sendPhoto(id=adminId, img, text, buttons, notification=true){
 
 
 /**
- * Deprecated
+ * Send buttons as a keyboard, most often better to use sendMessage with inline buttons than this.
  * @param {string=} id - User id
  * @param {string=} text - Message text
  * @param {array=} buttons - Button text
@@ -54,6 +87,7 @@ function sendMultipleChoice(id=adminId, text="fråga", buttons=["1","2"], notifi
 
 
 /**
+ * used in sendMessage to parse buttons.
  * @buttons  array of arrays/array of strings or string
  */
 function parseInlineKeyboard(buttons=[[{text:"buttontext", url: "url"}],
@@ -74,7 +108,7 @@ function parseInlineKeyboard(buttons=[[{text:"buttontext", url: "url"}],
     }
   }
   if(buttons){
-    print(JSON.stringify(buttons))
+    //print(JSON.stringify(buttons))
     return JSON.stringify({
       "inline_keyboard": buttons
     });
@@ -112,7 +146,7 @@ async function editMessageKeyboard(id=adminId, messageId, buttons){
  */
 function editMessageMedia(id, message, file_id){
   var url = botUrl + "/editMessageMedia?"
-  print(message.message_id)
+  //print(message.message_id)
   return JSON.parse(fetch(url, {chat_id:id, 
   message_id: message.message_id,
   parse_mode:"HTML", 
@@ -163,7 +197,11 @@ function answerInlineQuery(queryId, list, query=""){
 
 /**
  * generate response object from bot update, 
- * @returns {m: "message", id: "userId", text?: "message.lowercase", name?: "user name", caseSensitive?, query_id?, message_id?}
+ * types = ["message", "inline_query", "callback"]
+ * @returns one of the following
+ * {type: "message", m: {}, id: "", message_text: ""}
+ * {type: "callback", m: {}, id: "", button_text: "", message_text: "", name: "", message_id: ""}
+ * {type: "inline_query", id: "", query: "", name: "", query_id: ""}
  */
 function parseUpdate(e = exampleData){
   var res = {}
@@ -171,14 +209,18 @@ function parseUpdate(e = exampleData){
   let update = JSON.parse(e.postData.contents)
   let callback = update.callback_query
   if(callback){
+    res.type = "callback"
     res.m = callback.message
     res.id = callback.from.id.toString()
-    res.text = res.m.text = callback.data.toLowerCase()
-    res.caseSensitive = callback.data
+    
+    res.button_text = callback.message.text
+    res.message_text = res.m.text = callback.data
+    
     res.name = callback.from.first_name + " " + callback.from.last_name
     res.message_id = callback.message.message_id
   }
   else if(update.inline_query){
+    res.type = "inline_query"
     res.query = update.inline_query.query
     res.id = update.inline_query.from.id.toString()
     res.name = update.inline_query.from.first_name + update.inline_query.from.last_name
@@ -186,23 +228,12 @@ function parseUpdate(e = exampleData){
     
   }
   else {
+    res.type = "message"
     res.m = update.message
     res.id = res.m.chat.id.toString()
-    res.text = res.m.text.toLowerCase()
-    res.caseSensitive = res.m.text
+    res.message_text = res.m.text
   }
   return res
-}
-
-function setWebHook(){
-  var url = "https://script.google.com/macros/s/AKfycbzFfeUa0Upw6TwTKC88MSVGeM7QomyV4R8JZIH02IZmWDN7MhJfOWvpwdkgDwmUEJR9Og/exec";
-  var res = UrlFetchApp.fetch(botUrl+"/setWebhook?url="+url+"&allowed_updates=message").getContentText();
-  Logger.log(res)
-}
-
-function webhookinfo(){
-  var res = UrlFetchApp.fetch(botUrl+"/getWebhookInfo").getContentText();
-  Logger.log(res)
 }
 
 
@@ -258,9 +289,9 @@ function withinTimeInterval(start="07:30:00", end="21:30:00", time="22:00:00"){
   e = end.split(":").map(x=>parseInt(x))
   t = (time || getTime()).split(":").map(x=>parseInt(x))
   for(i in s){
-    if(t[i] < s[i] || t[i] > e[i]) print(false)
+    if(t[i] < s[i] || t[i] > e[i]) return false
   }
-  print(true)
+  return true
 }
 
 
