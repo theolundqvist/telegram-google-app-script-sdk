@@ -7,3 +7,8 @@ Some helper methods to use with Google Apps Script to simplify integration with 
 - Respond to inline querys
 - Remove/edit message content.
 and more
+
+Built this while developing
+https://t.me/aktienyheter_bot
+and
+https://t.me/ord_bot
